@@ -3,8 +3,12 @@ import zulip
 import time
 from sys import stdout
 
+print("!")
+stdout.flush()
+
 client = zulip.Client(config_file = "~/zuliprc")
 
+update_time = 1
 
 def run():
     result = client.register(
@@ -30,15 +34,17 @@ def run():
         try:
             res = client.get_events(queue_id=queue_id, last_event_id=last_event_id)
         except Exception:
-            time.sleep(1)
+            time.sleep(update_time)
+            print("!")
+            stdout.flush()
             continue
+
         if "error" in res["result"]:
-            if res["result"] == "http-error":
-                print("HTTP error event")
-            else:
-                if res.get("code") == "BAD_EVENT_QUEUE_ID":
-                    queue_id = None
-            time.sleep(1)
+            if res.get("code") == "BAD_EVENT_QUEUE_ID":
+                queue_id = None
+            time.sleep(update_time)
+            print("!")
+            stdout.flush()
             continue
 
         for event in res["events"]:
@@ -47,10 +53,10 @@ def run():
 
         print(count)
         stdout.flush()
-        time.sleep(1)
+        time.sleep(update_time)
         
 def callback(event, count):
-    if event["type"] == "message" and len(event["flags"]) == 0:
+    if event["type"] == "message" and "read" not in event["flags"] == 0:
         count = count + 1
         return
 
