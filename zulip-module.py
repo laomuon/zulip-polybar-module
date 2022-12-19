@@ -1,4 +1,3 @@
-#/usr/bin/env python3.10
 import zulip
 import time
 from sys import stdout
@@ -49,22 +48,23 @@ def run():
 
         for event in res["events"]:
             last_event_id = max(int(event["id"]), last_event_id)
-            callback(event, count)
+            count = count + callback(event)
 
         print(count)
         stdout.flush()
         time.sleep(update_time)
         
-def callback(event, count):
-    if event["type"] == "message" and "read" not in event["flags"] == 0:
-        count = count + 1
-        return
+def callback(event) -> int:
+    if event["type"] == "message" and "read" not in event["flags"]:
+        return 1
 
     if event["type"] == "update_message_flags" and event["flag"] == "read":
         if event["op"] == "add":
-            count = count - 1
+            return - len(event["messages"])
         elif event["op"] == "remove":
-            count = count + 1
+            return len(event["messages"]) 
+
+    return 0
 
 if __name__ == "__main__":
     run()
